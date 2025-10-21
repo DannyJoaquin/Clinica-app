@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id         Int      @id @default(autoincrement())
+  nombre     String
+  correo     String   @unique
+  contrasena String
+  rol        String
+  citas      Cita[]   @relation("DoctorCitas")
+  recetas    Receta[] @relation("DoctorRecetas")
+}
+
+model Paciente {
+  id              Int       @id @default(autoincrement())
+  nombreCompleto  String
+  fechaNacimiento DateTime
+  telefono        String?
+  correo          String?
+  direccion       String?
+  antecedentes    String?
+  citas           Cita[]
+  recetas         Receta[]
+  pagos           Pago[]
+  creadoEn        DateTime  @default(now())
+}
+
+model Cita {
+  id             Int      @id @default(autoincrement())
+  paciente       Paciente @relation(fields: [pacienteId], references: [id])
+  pacienteId     Int
+  doctor         Usuario  @relation("DoctorCitas", fields: [doctorId], references: [id])
+  doctorId       Int
+  fecha          DateTime
+  hora           String
+  motivoConsulta String?
+  estado         String   @default("pendiente")
+  notas          String?
+  pago           Pago?
+}
+
+model Receta {
+  id            Int      @id @default(autoincrement())
+  paciente      Paciente @relation(fields: [pacienteId], references: [id])
+  pacienteId    Int
+  doctor        Usuario  @relation("DoctorRecetas", fields: [doctorId], references: [id])
+  doctorId      Int
+  fechaEmision  DateTime @default(now())
+  medicamentos  String
+  instrucciones String?
+}
+
+model Pago {
+  id         Int      @id @default(autoincrement())
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+  pacienteId Int
+  cita       Cita?    @relation(fields: [citaId], references: [id])
+  citaId     Int?     @unique
+  monto      Float
+  metodoPago String
+  fechaPago  DateTime @default(now())
+}
