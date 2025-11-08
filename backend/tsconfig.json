@@ -8,7 +8,8 @@
     "allowSyntheticDefaultImports": true,
     "target": "es2019",
     "sourceMap": true,
-    "outDir": "./dist",
+  "outDir": "./dist",
+  "rootDir": "./src",
     "baseUrl": "./",
     "incremental": true,
     "strict": true,
@@ -16,5 +17,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "types": ["node"]
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

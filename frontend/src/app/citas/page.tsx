@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import type { Cita, CitaInput, Paciente, Doctor } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
 import { Label } from '@/components/ui/label';
 import { useProfile } from '@/lib/useProfile';
+import { usePermissions } from '@/lib/usePermissions';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
@@ -18,6 +20,7 @@ export default function CitasPage() {
   useAuthGuard();
   const toast = useToast();
   const { profile } = useProfile();
+  const { loading: loadingPerms, can } = usePermissions();
   const [items, setItems] = useState<Cita[]>([]);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [doctores, setDoctores] = useState<Doctor[]>([]);
@@ -28,6 +31,8 @@ export default function CitasPage() {
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [preStatus, setPreStatus] = useState<Record<number, 'pending' | 'complete' | 'error'>>({});
+  const [consStatus, setConsStatus] = useState<Record<number, 'pending' | 'complete' | 'error'>>({});
 
   const sorted = useMemo(() => items.slice().sort((a, b) => b.id - a.id), [items]);
   const pacientesById = useMemo(() => Object.fromEntries(pacientes.map(p => [p.id, p])), [pacientes]);
@@ -61,8 +66,46 @@ export default function CitasPage() {
   }
 
   useEffect(() => {
+    if (!loadingPerms && !can('citas.view')) {
+      window.location.href = '/dashboard';
+      return;
+    }
     load();
-  }, []);
+  }, [loadingPerms, can]);
+
+  // Load flow status badges (Preclínica/Consulta) after items load
+  useEffect(() => {
+    if (items.length === 0) return;
+    // Preclínica: accesible por admin/doctor/asistente
+    (async () => {
+      const entries = await Promise.all(items.map(async (c) => {
+        try {
+          await apiFetch(`/preclinic/${c.id}`);
+          return [c.id, 'complete'] as const;
+        } catch {
+          return [c.id, 'pending'] as const;
+        }
+      }));
+      setPreStatus(Object.fromEntries(entries));
+    })();
+
+    // Consulta: solo admin/doctor tienen permiso
+    if (profile?.rol === 'admin' || profile?.rol === 'doctor') {
+      (async () => {
+        const entries = await Promise.all(items.map(async (c) => {
+          try {
+            await apiFetch(`/consultations/${c.id}`);
+            return [c.id, 'complete'] as const;
+          } catch {
+            return [c.id, 'pending'] as const;
+          }
+        }));
+        setConsStatus(Object.fromEntries(entries));
+      })();
+    } else {
+      setConsStatus({});
+    }
+  }, [items, profile?.rol]);
 
   function handleChange<K extends keyof CitaInput>(key: K, val: CitaInput[K]) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -156,9 +199,12 @@ export default function CitasPage() {
 
   return (
     <>
-    <main className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+  <main className="space-y-6">
+      <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Citas</h1>
+        {can('preclinic.upsert') && (
+          <Link href="/dashboard/preclinica/nueva" className="text-sm text-indigo-600 underline">Nueva preclínica (sin cita)</Link>
+        )}
       </div>
 
       <Card>
@@ -206,6 +252,7 @@ export default function CitasPage() {
               value={typeof form.fecha === 'string' ? (form.fecha as string).slice(0, 10) : ''}
               onChange={(e) => handleChange('fecha', e.target.value as any)}
             />
+            <p className="text-xs text-gray-500">Selecciona la fecha de la cita.</p>
           </div>
 
           <div className="flex flex-col gap-1">
@@ -216,6 +263,7 @@ export default function CitasPage() {
               value={form.hora || ''}
               onChange={(e) => handleChange('hora', e.target.value as any)}
             />
+            <p className="text-xs text-gray-500">Formato 24h. Ej: 14:30.</p>
           </div>
 
           <div className="md:col-span-2 flex flex-col gap-1">
@@ -301,6 +349,8 @@ export default function CitasPage() {
                   <th className="p-2">Fecha</th>
                   <th className="p-2">Hora</th>
                   <th className="p-2">Estado</th>
+                  <th className="p-2">Preclínica</th>
+                  {(profile?.rol === 'admin' || profile?.rol === 'doctor') && <th className="p-2">Consulta</th>}
                   <th className="p-2">Acciones</th>
                 </tr>
               </thead>
@@ -317,13 +367,39 @@ export default function CitasPage() {
                         {c.estado}
                       </Badge>
                     </td>
-                    <td className="p-2 flex gap-2">
+                    <td className="p-2">
+                      {preStatus[c.id] === 'complete' ? (
+                        <Badge variant="success">Completa</Badge>
+                      ) : (
+                        <Badge variant="warning">Pendiente</Badge>
+                      )}
+                    </td>
+                    {(profile?.rol === 'admin' || profile?.rol === 'doctor') && (
+                      <td className="p-2">
+                        {consStatus[c.id] === 'complete' ? (
+                          <Badge variant="success">Completa</Badge>
+                        ) : (
+                          <Badge variant="warning">Pendiente</Badge>
+                        )}
+                      </td>
+                    )}
+                    <td className="p-2 flex gap-3 flex-wrap items-center">
                       <button className="text-blue-600 hover:underline" onClick={() => edit(c)}>
                         Editar
                       </button>
                       <button className="text-red-600 hover:underline disabled:text-gray-400" onClick={() => remove(c.id)} disabled={!(profile?.rol === 'admin' || profile?.rol === 'asistente')}>
                         Eliminar
                       </button>
+                      {can('preclinic.view') && (
+                        <Link className="text-indigo-600 hover:underline" href={`/dashboard/preclinica/${c.id}`}>
+                          Preclínica
+                        </Link>
+                      )}
+                        {can('consulta.view') && (
+                        <Link className="text-emerald-600 hover:underline" href={`/dashboard/consulta/${c.id}`}>
+                          Consulta
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}

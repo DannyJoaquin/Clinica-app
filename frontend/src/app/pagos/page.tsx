@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Card, CardHeader } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
 import { useProfile } from '@/lib/useProfile';
@@ -59,6 +60,10 @@ export default function PagosPage() {
         setError('Paciente, monto y método de pago son obligatorios');
         return;
       }
+      if ((Number(form.monto) || 0) <= 0) {
+        setError('El monto debe ser mayor a 0');
+        return;
+      }
       const payload: any = { ...form, monto: Number(form.monto) };
       const created = await apiFetch<Pago>('/pagos', {
         method: 'POST',
@@ -101,41 +106,55 @@ export default function PagosPage() {
       <Card>
         <CardHeader>
           <h2 className="font-medium">Registrar pago</h2>
+          <p className="text-sm text-gray-500">Completa los datos para registrar el pago.</p>
         </CardHeader>
         {error && <p className="text-red-600 mb-2">{error}</p>}
         <div className="grid gap-3 md:grid-cols-2">
-          <Select
-            value={form.pacienteId || ''}
-            onChange={(e) => handleChange('pacienteId', Number(e.target.value) as any)}
-          >
-            <option value="">Seleccione paciente</option>
-            {pacientes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombreCompleto}
-              </option>
-            ))}
-          </Select>
-          <Input
-            type="number"
-            placeholder="ID Cita (opcional)"
-            value={form.citaId || ''}
-            onChange={(e) => handleChange('citaId', e.target.value ? Number(e.target.value) : undefined)}
-          />
-          <Input
-            type="number"
-            step="0.01"
-            placeholder="Monto"
-            value={form.monto || ''}
-            onChange={(e) => handleChange('monto', Number(e.target.value) as any)}
-          />
-          <Select
-            value={form.metodoPago || 'efectivo'}
-            onChange={(e) => handleChange('metodoPago', e.target.value)}
-          >
-            <option value="efectivo">Efectivo</option>
-            <option value="tarjeta">Tarjeta</option>
-            <option value="transferencia">Transferencia</option>
-          </Select>
+          <div className="flex flex-col gap-1">
+            <Label>Paciente</Label>
+            <Select
+              value={form.pacienteId || ''}
+              onChange={(e) => handleChange('pacienteId', Number(e.target.value) as any)}
+            >
+              <option value="">Seleccione paciente</option>
+              {pacientes.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombreCompleto}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>ID Cita (opcional)</Label>
+            <Input
+              type="number"
+              placeholder="ID Cita (opcional)"
+              value={form.citaId || ''}
+              onChange={(e) => handleChange('citaId', e.target.value ? Number(e.target.value) : undefined)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Monto</Label>
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="Monto"
+              value={form.monto || ''}
+              onChange={(e) => handleChange('monto', Number(e.target.value) as any)}
+            />
+            <p className="text-xs text-gray-500">Usa punto para decimales. Debe ser mayor a 0.</p>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Método de pago</Label>
+            <Select
+              value={form.metodoPago || 'efectivo'}
+              onChange={(e) => handleChange('metodoPago', e.target.value)}
+            >
+              <option value="efectivo">Efectivo</option>
+              <option value="tarjeta">Tarjeta</option>
+              <option value="transferencia">Transferencia</option>
+            </Select>
+          </div>
         </div>
         <div className="mt-3 flex gap-2">
           <Button onClick={createPago}>Registrar</Button>

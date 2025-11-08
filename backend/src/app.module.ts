@@ -8,6 +8,10 @@ import { PagosModule } from './pagos/pagos.module';
 import { AppController } from './app.controller';
 import { DoctoresModule } from './doctores/doctores.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
+import { AdminModule } from './admin/admin.module';
+import { PreclinicModule } from './preclinic/preclinic.module';
+import { ConsultationsModule } from './consultations/consultations.module';
+import { PermissionsModule } from './permissions/permissions.module';
 
 @Module({
   imports: [
@@ -19,6 +23,10 @@ import { UsuariosModule } from './usuarios/usuarios.module';
     PagosModule,
     DoctoresModule,
     UsuariosModule,
+    AdminModule,
+    PreclinicModule,
+    ConsultationsModule,
+    PermissionsModule,
   ],
   controllers: [AppController],
 })

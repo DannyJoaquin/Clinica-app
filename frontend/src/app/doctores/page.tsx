@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import type { Doctor, UsuarioProfile } from '@/lib/types';
 import { Card, CardHeader } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -87,7 +88,7 @@ export default function DoctoresPage() {
   }
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Doctores</h1>
       </div>
@@ -142,9 +143,18 @@ export default function DoctoresPage() {
           {error && <p className="text-red-600 mt-1">{error}</p>}
         </CardHeader>
         <div className="grid gap-3 md:grid-cols-3">
-          <Input placeholder="Nombre" value={form.nombre} onChange={(e) => handleChange('nombre', e.target.value)} disabled={!isAdmin} />
-          <Input placeholder="Correo" value={form.correo} onChange={(e) => handleChange('correo', e.target.value)} disabled={!isAdmin} />
-          <Input placeholder="Contraseña" type="password" value={form.contrasena} onChange={(e) => handleChange('contrasena', e.target.value)} disabled={!isAdmin} />
+          <div className="flex flex-col gap-1">
+            <Label>Nombre</Label>
+            <Input placeholder="Nombre" value={form.nombre} onChange={(e) => handleChange('nombre', e.target.value)} disabled={!isAdmin} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Correo</Label>
+            <Input placeholder="Correo" value={form.correo} onChange={(e) => handleChange('correo', e.target.value)} disabled={!isAdmin} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Contraseña</Label>
+            <Input placeholder="Contraseña" type="password" value={form.contrasena} onChange={(e) => handleChange('contrasena', e.target.value)} disabled={!isAdmin} />
+          </div>
         </div>
         <div className="mt-3 flex gap-2">
           <Button onClick={createDoctor} loading={creating} disabled={!isAdmin}>Crear</Button>

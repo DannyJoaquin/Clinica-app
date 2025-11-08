@@ -9,6 +9,10 @@ export class CitasService {
     return this.prisma.cita.findMany({ orderBy: { fecha: 'desc' } });
   }
 
+  findOne(id: number) {
+    return this.prisma.cita.findUnique({ where: { id } });
+  }
+
   async create(data: { pacienteId: number; doctorId: number; fecha: Date; hora: string; motivoConsulta?: string; estado?: string; notas?: string }) {
     return this.prisma.cita.create({ data });
   }

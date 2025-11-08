@@ -6,6 +6,7 @@ import type { Paciente, PacienteInput } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProfile } from '@/lib/useProfile';
 import { useToast } from '@/components/ui/toast';
@@ -21,6 +22,8 @@ export default function PacientesPage() {
   const [form, setForm] = useState<Partial<PacienteInput>>({});
   const [editingId, setEditingId] = useState<number | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [formErrors, setFormErrors] = useState<{ telefono?: string; correo?: string; nombre?: string; fechaNacimiento?: string }>({});
+  const [submitted, setSubmitted] = useState(false);
 
   const sorted = useMemo(() => items.slice().sort((a, b) => b.id - a.id), [items]);
 
@@ -45,13 +48,25 @@ export default function PacientesPage() {
     setForm((f) => ({ ...f, [key]: val }));
   }
 
+  function validate(): boolean {
+    const errs: typeof formErrors = {};
+    if (!form.nombreCompleto) errs.nombre = 'El nombre es obligatorio';
+    if (!form.fechaNacimiento) errs.fechaNacimiento = 'La fecha de nacimiento es obligatoria';
+    const tel = (form.telefono || '').replace(/\D/g, '');
+    if (form.telefono && tel.length !== 8) errs.telefono = 'El teléfono de Honduras debe tener 8 dígitos';
+    if (form.correo) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.correo)) errs.correo = 'Correo inválido';
+    }
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
   async function save() {
     try {
       setError(null);
-      if (!form.nombreCompleto || !form.fechaNacimiento) {
-        setError('Nombre completo y fecha de nacimiento son obligatorios');
-        return;
-      }
+      setSubmitted(true);
+      if (!validate()) return;
       // Roles: create/update permitidos para admin/asistente/doctor (backend ya lo aplica)
       if (!profile) return;
       if (editingId) {
@@ -71,6 +86,8 @@ export default function PacientesPage() {
         toast.success('Paciente creado');
       }
       setForm({});
+      setFormErrors({});
+      setSubmitted(false);
     } catch (e: any) {
       setError(e.message);
       toast.error(e.message || 'Error al guardar');
@@ -130,49 +147,94 @@ export default function PacientesPage() {
       <Card>
         <CardHeader>
           <h2 className="font-medium">{editingId ? 'Editar paciente' : 'Crear paciente'}</h2>
+          <p className="text-sm text-gray-500">Completa los datos del paciente. Los campos marcados son requeridos.</p>
         </CardHeader>
         {error && <p className="text-red-600 mb-2">{error}</p>}
         <div className="grid gap-3 md:grid-cols-2">
-          <Input
-            placeholder="Nombre completo"
-            value={form.nombreCompleto || ''}
-            onChange={(e) => handleChange('nombreCompleto', e.target.value)}
-          />
-          <Input
-            type="date"
-            placeholder="Fecha de nacimiento"
-            value={(form.fechaNacimiento as string) || ''}
-            onChange={(e) => handleChange('fechaNacimiento', e.target.value)}
-          />
-          <Input
-            placeholder="Teléfono"
-            value={form.telefono || ''}
-            onChange={(e) => handleChange('telefono', e.target.value)}
-          />
-          <Input
-            placeholder="Correo"
-            value={form.correo || ''}
-            onChange={(e) => handleChange('correo', e.target.value)}
-          />
-          <Input
-            placeholder="Dirección"
-            value={form.direccion || ''}
-            onChange={(e) => handleChange('direccion', e.target.value)}
-          />
-          <textarea
-            className="border rounded px-3 py-2 md:col-span-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-            placeholder="Antecedentes"
-            value={form.antecedentes || ''}
-            onChange={(e) => handleChange('antecedentes', e.target.value)}
-          />
+          <div className="flex flex-col gap-1">
+            <Label>Nombre completo</Label>
+            <Input
+              placeholder="Nombre completo"
+              value={form.nombreCompleto || ''}
+              onChange={(e) => { handleChange('nombreCompleto', e.target.value); if (submitted) validate(); }}
+              aria-invalid={!!formErrors.nombre}
+              aria-describedby={formErrors.nombre ? 'pac-nombre-error' : undefined}
+            />
+            {formErrors.nombre && <p id="pac-nombre-error" className="text-xs text-red-600">{formErrors.nombre}</p>}
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Fecha de nacimiento</Label>
+            <Input
+              type="date"
+              placeholder="Fecha de nacimiento"
+              value={(form.fechaNacimiento as string) || ''}
+              onChange={(e) => { handleChange('fechaNacimiento', e.target.value); if (submitted) validate(); }}
+              aria-invalid={!!formErrors.fechaNacimiento}
+              aria-describedby={formErrors.fechaNacimiento ? 'pac-fecha-error' : undefined}
+            />
+            {formErrors.fechaNacimiento && <p id="pac-fecha-error" className="text-xs text-red-600">{formErrors.fechaNacimiento}</p>}
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Teléfono</Label>
+            <Input
+              type="tel"
+              inputMode="numeric"
+              maxLength={8}
+              placeholder="Ej. 88889999"
+              value={form.telefono || ''}
+              onChange={(e) => {
+                const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 8);
+                handleChange('telefono', onlyDigits as any);
+                if (submitted) validate();
+              }}
+              aria-invalid={!!formErrors.telefono}
+              aria-describedby={formErrors.telefono ? 'pac-telefono-error' : 'pac-telefono-help'}
+            />
+            {formErrors.telefono ? (
+              <p id="pac-telefono-error" className="text-xs text-red-600">{formErrors.telefono}</p>
+            ) : (
+              <p id="pac-telefono-help" className="text-xs text-gray-500">El teléfono en Honduras tiene 8 dígitos.</p>
+            )}
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Correo</Label>
+            <Input
+              placeholder="Correo"
+              value={form.correo || ''}
+              onChange={(e) => { handleChange('correo', e.target.value); if (submitted) validate(); }}
+              aria-invalid={!!formErrors.correo}
+              aria-describedby={formErrors.correo ? 'pac-correo-error' : undefined}
+            />
+            {formErrors.correo && <p id="pac-correo-error" className="text-xs text-red-600">{formErrors.correo}</p>}
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <Label>Dirección</Label>
+            <Input
+              placeholder="Dirección"
+              value={form.direccion || ''}
+              onChange={(e) => handleChange('direccion', e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <Label>Antecedentes</Label>
+            <textarea
+              className="border rounded px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+              placeholder="Antecedentes"
+              value={form.antecedentes || ''}
+              onChange={(e) => handleChange('antecedentes', e.target.value)}
+              rows={4}
+            />
+          </div>
         </div>
         <div className="mt-3 flex gap-2">
-          <Button onClick={save} disabled={!profile}>{editingId ? 'Guardar cambios' : 'Crear'}</Button>
+          <Button onClick={save} disabled={!profile || (submitted && Object.keys(formErrors).length > 0)}>{editingId ? 'Guardar cambios' : 'Crear'}</Button>
           <Button
             variant="outline"
             onClick={() => {
               setEditingId(null);
               setForm({});
+              setFormErrors({});
+              setSubmitted(false);
             }}
             disabled={!profile}
           >

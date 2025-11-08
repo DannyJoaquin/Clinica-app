@@ -15,6 +15,7 @@
    - `npm run prisma:migrate -- --name init`
 5. Ejecuta en dev:
    - `npm run start:dev`
+   - El servidor usa `PORT` desde `.env` (por defecto 3002 en este repositorio)
 
 ## Endpoints principales
 - Auth: POST `/auth/register`, POST `/auth/login`, GET `/auth/profile`
@@ -25,8 +26,14 @@
 
 ## Documentación de API (Swagger)
 
-- Disponible en `http://localhost:3001/docs` cuando el servidor está ejecutándose.
+- Disponible en `http://localhost:3002/docs` cuando el servidor está ejecutándose.
 - Incluye esquemas de DTOs y ejemplos de request/response.
+
+## Panel Administrativo (Admin)
+
+- Endpoint resumen: `GET /admin/dashboard/summary` (requiere JWT y rol `admin`).
+- Agrega métricas: pacientes totales, citas del día, ingresos del mes, recetas totales, citas por estado,
+  actividad reciente, agenda del día e ingresos de los últimos 6 meses.
 
 ## Pruebas E2E
 

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Users, Calendar, ReceiptText, CreditCard, LogOut, Stethoscope } from 'lucide-react';
 import { useCallback } from 'react';
 import { useProfile } from '@/lib/useProfile';
+import { usePermissions } from '@/lib/usePermissions';
 
 type NavItem = {
   href: Route;
@@ -14,8 +15,10 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/admin', label: 'Admin', icon: LayoutDashboard },
   { href: '/pacientes', label: 'Pacientes', icon: Users },
   { href: '/citas', label: 'Citas', icon: Calendar },
+  { href: '/dashboard/preclinica/nueva', label: 'Preclínica', icon: Stethoscope },
   { href: '/recetas', label: 'Recetas', icon: ReceiptText },
   { href: '/pagos', label: 'Pagos', icon: CreditCard },
   { href: '/usuarios', label: 'Usuarios', icon: Users },
@@ -25,6 +28,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { profile } = useProfile();
+  const { can } = usePermissions();
 
   const onLogout = useCallback(() => {
     try {
@@ -46,9 +50,10 @@ export default function Sidebar() {
           if (item.href === '/pagos') {
             return profile?.rol === 'admin' || profile?.rol === 'asistente';
           }
-          if (item.href === '/usuarios') {
-            return profile?.rol === 'admin';
-          }
+          if (item.href === '/usuarios') return profile?.rol === 'admin';
+          if (item.href === '/dashboard/admin') return profile?.rol === 'admin';
+          if (item.href === '/dashboard/preclinica/nueva') return can('preclinic.upsert');
+          if (item.href === '/citas') return can('citas.view');
           return true;
         }).map((item) => {
           const active = pathname === item.href || pathname?.startsWith(item.href + '/');

@@ -15,6 +15,9 @@ model Usuario {
   rol        String
   citas      Cita[]   @relation("DoctorCitas")
   recetas    Receta[] @relation("DoctorRecetas")
+  consultations Consultation[] @relation("DoctorConsultations")
+  // Relación inversa para las preclínicas registradas por el usuario
+  recordedPreclinics Preclinic[] @relation("RecordedByUser")
 }
 
 model Paciente {
@@ -29,6 +32,9 @@ model Paciente {
   recetas         Receta[]
   pagos           Pago[]
   creadoEn        DateTime  @default(now())
+  consultations   Consultation[]
+  // Relación con preclínicas (uno a muchos)
+  preclinics      Preclinic[] @relation("PatientPreclinics")
 }
 
 model Cita {
@@ -43,6 +49,8 @@ model Cita {
   estado         String   @default("pendiente")
   notas          String?
   pago           Pago?
+  preclinic      Preclinic?
+  consultation   Consultation?
 }
 
 model Receta {
@@ -66,3 +74,63 @@ model Pago {
   metodoPago String
   fechaPago  DateTime @default(now())
 }
+
+model Preclinic {
+  id             Int       @id @default(autoincrement())
+  // Puede estar ligada a una cita o ser ingreso sin cita
+  appointment    Cita?     @relation(fields: [appointmentId], references: [id])
+  appointmentId  Int?      @unique
+  // Siempre ligada a un paciente
+  patient        Paciente  @relation("PatientPreclinics", fields: [patientId], references: [id])
+  patientId      Int
+  // Usuario que registró la preclínica (opcional)
+  recordedBy     Usuario?  @relation("RecordedByUser", fields: [recordedById], references: [id])
+  recordedById   Int?
+  weight         Float
+  height         Float
+  bloodPressure  String
+  temperature    Float
+  heartRate      Int
+  oxygenSat      Int
+  reason         String
+  notes          String?
+  createdAt      DateTime  @default(now())
+  Consultation   Consultation[]
+}
+
+model Consultation {
+  id            Int       @id @default(autoincrement())
+  appointment   Cita      @relation(fields: [appointmentId], references: [id])
+  appointmentId Int       @unique
+  patient       Paciente  @relation(fields: [patientId], references: [id])
+  patientId     Int
+  doctor        Usuario   @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  doctorId      Int
+  preclinic     Preclinic? @relation(fields: [preclinicId], references: [id])
+  preclinicId   Int?
+  diagnosis     String
+  treatment     String
+  notes         String?
+  createdAt     DateTime  @default(now())
+}
+
+/// Permissions and role-permission mapping (role is a string on Usuario)
+model Permission {
+  id        Int       @id @default(autoincrement())
+  key       String    @unique
+  name      String?
+  createdAt DateTime  @default(now())
+  roles     RolePermission[]
+}
+
+model RolePermission {
+  id            Int        @id @default(autoincrement())
+  role          String
+  permission    Permission @relation(fields: [permissionId], references: [id])
+  permissionId  Int
+  createdAt     DateTime   @default(now())
+
+  @@unique([role, permissionId])
+}
+
+ 

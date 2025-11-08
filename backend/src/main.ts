@@ -7,6 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  // Swagger config and app bootstrap (touch to restart)
   const config = new DocumentBuilder()
     .setTitle('Clínica API')
     .setDescription('Documentación de la API de la clínica')

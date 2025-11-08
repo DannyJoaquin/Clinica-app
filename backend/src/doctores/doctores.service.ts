@@ -31,4 +31,10 @@ export class DoctoresService {
     await this.prisma.usuario.delete({ where: { id } });
     return { ok: true };
   }
+
+  async getById(id: number) {
+    const doc = await this.prisma.usuario.findUnique({ where: { id } });
+    if (!doc || doc.rol !== 'doctor') throw new NotFoundException('Doctor no encontrado');
+    return { id: doc.id, nombre: doc.nombre, correo: doc.correo, rol: doc.rol };
+  }
 }

@@ -5,6 +5,7 @@
   "scripts": {
     "start": "nest start",
     "start:dev": "nest start --watch",
+    "dev:sqlite": "dotenv -e .env.sqlite -- nest start --watch",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\"",
@@ -13,6 +14,7 @@
     "prisma:deploy": "prisma migrate deploy",
   "prisma:generate:sqlite": "prisma generate --schema=prisma/schema.sqlite.prisma",
   "prisma:migrate:sqlite": "powershell -Command \"$env:DATABASE_URL='file:./dev.db'; prisma migrate dev --name init --schema=prisma/schema.sqlite.prisma\"",
+  "prisma:push:sqlite": "set DATABASE_URL=file:./dev.db&& prisma db push --schema=prisma\\schema.sqlite.prisma",
   "db:reset:sqlite": "powershell -Command \"Remove-Item -ErrorAction SilentlyContinue prisma/dev.db; $env:DATABASE_URL='file:./dev.db'; prisma migrate reset --force --skip-seed --schema=prisma/schema.sqlite.prisma\"",
     "prisma:studio": "prisma studio",
     "seed": "ts-node src/seed.ts",
@@ -55,7 +57,8 @@
     "prettier": "^3.3.3",
     "prisma": "^5.18.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "dotenv-cli": "^7.4.2"
   },
   "engines": {
     "node": "^20.0.0 || ^18.0.0"

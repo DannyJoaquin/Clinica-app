@@ -136,7 +136,7 @@ export default function RecetasPage() {
   }
 
   return (
-    <main className="p-6 space-y-6">
+    <main className="space-y-6">
       <h1 className="text-2xl font-semibold">Recetas</h1>
 
       <Card>
@@ -183,6 +183,10 @@ export default function RecetasPage() {
               onChange={(e) => handleChange('medicamentos', e.target.value as any)}
               disabled={!(profile?.rol === 'admin' || profile?.rol === 'doctor')}
             />
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-500">Separe múltiples medicamentos con coma.</p>
+              <p className="text-xs text-gray-500">{(form.medicamentos?.length || 0)} / 300</p>
+            </div>
           </div>
           <div className="md:col-span-2 flex flex-col gap-1">
             <Label>Instrucciones (opcional)</Label>

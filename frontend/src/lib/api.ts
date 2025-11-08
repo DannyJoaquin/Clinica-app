@@ -22,7 +22,16 @@ export async function apiFetch<T = any>(path: string, options: RequestInit = {})
     ...(options.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers, cache: 'no-store' });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { ...options, headers, cache: 'no-store' });
+  } catch (e: any) {
+    // Network or CORS error
+    const message = e?.message?.toLowerCase().includes('failed to fetch')
+      ? 'No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.'
+      : 'No se pudo completar la solicitud.';
+    throw new Error(message);
+  }
   if (!res.ok) {
     let msg = `Error ${res.status}`;
     try {

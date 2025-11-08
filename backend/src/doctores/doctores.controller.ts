@@ -17,6 +17,11 @@ export class DoctoresController {
     return this.service.list();
   }
 
+  @Get(':id')
+  async get(@Param('id') id: string) {
+    return this.service.getById(Number(id));
+  }
+
   @Post()
   @Roles('admin')
   async create(@Body() body: CreateDoctorDto) {

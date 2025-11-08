@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { apiFetch } from './api';
+import { apiFetch, getToken } from './api';
 import type { UsuarioProfile } from './types';
 
 export function useProfile() {
@@ -10,6 +10,12 @@ export function useProfile() {
 
   useEffect(() => {
     let mounted = true;
+    const token = getToken();
+    if (!token) {
+      // Evita llamadas innecesarias y errores cuando no hay token aún
+      setLoading(false);
+      return () => { mounted = false; };
+    }
     (async () => {
       try {
         const me = await apiFetch<UsuarioProfile>('/auth/profile');

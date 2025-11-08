@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Card, CardHeader } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
 import { useProfile } from '@/lib/useProfile';
@@ -100,17 +101,30 @@ export default function UsuariosPage() {
       <Card>
         <CardHeader>
           <h2 className="font-medium">Gestión</h2>
+          <p className="text-sm text-gray-500">Crea o edita usuarios del sistema y asigna su rol.</p>
         </CardHeader>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 p-4">
-          <Input placeholder="Nombre" value={form.nombre || ''} onChange={(e) => handleChange('nombre', e.target.value)} />
-          <Input placeholder="Correo" value={form.correo || ''} onChange={(e) => handleChange('correo', e.target.value)} />
-          <Select value={form.rol || ''} onChange={(e) => handleChange('rol', e.target.value)}>
-            <option value="">Rol…</option>
-            <option value="admin">Admin</option>
-            <option value="doctor">Doctor</option>
-            <option value="asistente">Asistente</option>
-          </Select>
-          <Input placeholder="Contraseña" type="password" value={form.contrasena || ''} onChange={(e) => handleChange('contrasena', e.target.value)} />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 p-4 pt-0">
+          <div className="flex flex-col gap-1">
+            <Label>Nombre</Label>
+            <Input placeholder="Nombre" value={form.nombre || ''} onChange={(e) => handleChange('nombre', e.target.value)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Correo</Label>
+            <Input placeholder="Correo" value={form.correo || ''} onChange={(e) => handleChange('correo', e.target.value)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Rol</Label>
+            <Select value={form.rol || ''} onChange={(e) => handleChange('rol', e.target.value)}>
+              <option value="">Rol…</option>
+              <option value="admin">Admin</option>
+              <option value="doctor">Doctor</option>
+              <option value="asistente">Asistente</option>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label>Contraseña</Label>
+            <Input placeholder="Contraseña" type="password" value={form.contrasena || ''} onChange={(e) => handleChange('contrasena', e.target.value)} />
+          </div>
         </div>
         <div className="px-4 pb-4 flex gap-2">
           <Button onClick={save}>{editingId ? 'Guardar' : 'Crear usuario'}</Button>
